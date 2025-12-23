@@ -59,7 +59,7 @@ fi
 TOTAL_MOVES=0
 MAX_MOVES=0
 MIN_MOVES=100000
-VALGRIND="valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=all --quiet"
+VALGRIND="valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=all"
 
 generate_arg() {
     count=$1
