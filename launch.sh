@@ -47,13 +47,12 @@ else
 fi
 echo ""
 
+echo -e "${BLUE}Compiling Project...${NC}"
+make -C "$SOURCE_PATH" > /dev/null
+
 if [ ! -f "$PUSH_SWAP" ]; then
-    echo -e "${BLUE}Compiling Project...${NC}"
-    make -C .. > /dev/null
-    if [ ! -f "$PUSH_SWAP" ]; then
-        echo -e "${RED}Error: Compilation failed.${NC}"
-        exit 1
-    fi
+    echo -e "${RED}Error: Compilation failed or binary not found.${NC}"
+    exit 1
 fi
 
 TOTAL_MOVES=0
@@ -85,6 +84,47 @@ check_error_management() {
             echo -e "Input '$ARG': ${RED}[KO]${NC}"
         fi
     done
+}
+
+check_allowed_function() {
+    echo -e "\n${BLUE}=== ALLOWED FUNCTIONS CHECK ===${NC}"
+    
+    WHITELIST_FILE=".whitelist.txt"
+
+    BINARY="$PUSH_SWAP"
+    
+    USED_FUNCS=$(nm -u "$BINARY" | awk '{print $2}' | sort | uniq)
+    VIOLATION=0
+    ALLOWED_FUNCS=$(cat "$WHITELIST_FILE")
+
+    for func in $USED_FUNCS; do
+
+        clean_func=${func%%@*}
+        
+        clean_func=${clean_func#_}
+
+        if [[ "$clean_func" == _* || "$clean_func" == .* ]]; then
+            continue
+        fi
+        
+        if [[ "$clean_func" == "dyld_stub_binder" || "$clean_func" == "gmon_start" || \
+              "$clean_func" == "data_start" || "$clean_func" == "edata" || \
+              "$clean_func" == "end" || "$clean_func" == "bss_start" ]]; then
+            continue
+        fi
+
+        if ! echo "$ALLOWED_FUNCS" | grep -w -q "^$clean_func$"; then
+            echo -e "Forbidden function used: ${RED}$clean_func${NC}"
+            VIOLATION=1
+        fi
+    done
+
+    if [ $VIOLATION -eq 0 ]; then
+        echo -e "No Forbidden Functions. ${GREEN}[OK]${NC}"
+    else
+        echo -e "${RED}Forbidden functions detected!${NC}"
+        echo "FORBIDDEN FUNCTIONS DETECTED" >> "$LOG_FILE"
+    fi
 }
 
 check_leaks() {
@@ -133,14 +173,17 @@ run_tester() {
 
     if [ "$MODE" == "COMPLETE" ]; then
         check_error_management
+        check_allowed_function
         run_test_loop 3 3 5
         run_test_loop 5 12 10
         run_test_loop 100 700 20
         run_test_loop 500 5500 20
         check_leaks
     elif [ "$MODE" == "100" ]; then
+        check_allowed_function
         run_test_loop 100 700 $COUNT
     elif [ "$MODE" == "500" ]; then
+        check_allowed_function
         run_test_loop 500 5500 $COUNT
     fi
 }

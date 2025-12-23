@@ -33,7 +33,6 @@ Before running the tester for the first time, you must grant execution permissio
 
 ```bash
 chmod +x launch.sh
-chmod +x checker
 ```
 
 ## ⚙️ 3. Usage Commands
