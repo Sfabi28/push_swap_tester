@@ -57,3 +57,13 @@ Min: 3800 | Max: 4431 | Avg: 3956
 ```
 
 Happy debugging!🖥️
+
+
+
+## 🛠️ More 42 Tools
+
+Explore my full suite of testers:
+
+[![ft_printf](https://img.shields.io/badge/42-ft__printf-blue?style=for-the-badge&logo=c)](https://github.com/Sfabi28/printf_tester)
+[![get_next_line](https://img.shields.io/badge/42-Get_Next_Line-green?style=for-the-badge&logo=c)](https://github.com/Sfabi28/gnl_tester)
+[![libft](https://img.shields.io/badge/42-libft-orange?style=for-the-badge&logo=c)](https://github.com/Sfabi28/libft_tester)
