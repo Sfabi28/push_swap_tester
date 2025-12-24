@@ -15,6 +15,55 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 RESET='\033[0m'
 
+check_dev_mode() {
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+    if [ "$CURRENT_BRANCH" == "dev" ]; then
+        echo -e "\n${MAGENTA}⚠️  WARNING: YOU ARE IN DEVELOPER MODE (dev branch) ⚠️${NC}"
+        echo -e "${MAGENTA}This version might be unstable.${NC}"
+        echo -e "If you are a student, please switch to stable: ${CYAN}git checkout main${NC}\n"
+        sleep 5
+    fi
+}
+
+check_updates() {
+    if [ -d ".git" ]; then
+        echo -n -e "${CYAN}Checking for updates... ${NC}"
+        
+        git fetch origin > /dev/null 2>&1
+        
+        LOCAL=$(git rev-parse HEAD)
+        REMOTE=$(git rev-parse @{u} 2>/dev/null)
+
+        if [ -z "$REMOTE" ]; then
+            return
+        fi
+
+        if [ "$LOCAL" != "$REMOTE" ]; then
+            echo -e "${RED}[UPDATE FOUND]${NC}"
+            echo -e "\n${YELLOW}🚨  A NEW VERSION IS AVAILABLE!  🚨${NC}"
+            echo -e "You are using an old version of the tester."
+            echo -e "Do you want to update it now? (Recommended) [y/N]"
+            read -r -p "Select: " RESPONSE
+            
+            if [[ "$RESPONSE" =~ ^[yY]$ ]]; then
+                echo -e "${GREEN}Downloading updates...${NC}"
+                git pull
+                echo -e "\n${GREEN}✅ Update successful!${NC}"
+                echo -e "${CYAN}Please restart the tester to apply changes.${NC}"
+                exit 0
+            else
+                echo -e "${YELLOW}Update skipped. Continuing with current version...${NC}\n"
+            fi
+        else
+            echo -e "${GREEN}[UP TO DATE]${NC}"
+        fi
+    fi
+}
+
+check_dev_mode
+check_updates
+
 rm -f errors.log valgrind_out.txt
 
 echo "=== TEST SESSION STARTED: $(date) ===" > "$LOG_FILE"
