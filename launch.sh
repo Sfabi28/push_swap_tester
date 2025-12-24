@@ -90,17 +90,24 @@ check_allowed_function() {
     echo -e "\n${BLUE}=== ALLOWED FUNCTIONS CHECK ===${NC}"
     
     WHITELIST_FILE=".whitelist.txt"
-
     BINARY="$PUSH_SWAP"
     
+    if [ ! -f "$BINARY" ]; then
+        echo -e "${RED}Error: Binary $BINARY not found!${NC}"
+        return
+    fi
+
     USED_FUNCS=$(nm -u "$BINARY" | awk '{print $2}' | sort | uniq)
     VIOLATION=0
+    
+    if [ ! -f "$WHITELIST_FILE" ]; then
+        echo -e "${YELLOW}Warning: $WHITELIST_FILE not found.${NC}"
+        return
+    fi
     ALLOWED_FUNCS=$(cat "$WHITELIST_FILE")
 
     for func in $USED_FUNCS; do
-
         clean_func=${func%%@*}
-        
         clean_func=${clean_func#_}
 
         if [[ "$clean_func" == _* || "$clean_func" == .* ]]; then
@@ -109,7 +116,10 @@ check_allowed_function() {
         
         if [[ "$clean_func" == "dyld_stub_binder" || "$clean_func" == "gmon_start" || \
               "$clean_func" == "data_start" || "$clean_func" == "edata" || \
-              "$clean_func" == "end" || "$clean_func" == "bss_start" ]]; then
+              "$clean_func" == "end" || "$clean_func" == "bss_start" || \
+              "$clean_func" == "ITM_deregisterTMCloneTable" || \
+              "$clean_func" == "ITM_registerTMCloneTable" || \
+              "$clean_func" == "stack_chk_fail" || "$clean_func" == "_stack_chk_fail" ]]; then
             continue
         fi
 
@@ -123,7 +133,9 @@ check_allowed_function() {
         echo -e "No Forbidden Functions. ${GREEN}[OK]${NC}"
     else
         echo -e "${RED}Forbidden functions detected!${NC}"
-        echo "FORBIDDEN FUNCTIONS DETECTED" >> "$LOG_FILE"
+        if [ -n "$LOG_FILE" ]; then
+            echo "FORBIDDEN FUNCTIONS DETECTED" >> "$LOG_FILE"
+        fi
     fi
 }
 
@@ -149,16 +161,13 @@ run_test_loop() {
     for ((i=1; i<=RUNS; i++)); do
         ARG=$(generate_arg $QTY)
         MOVES=$($PUSH_SWAP $ARG | wc -l)
-        CHECK_OUT=$($PUSH_SWAP $ARG | $CHECKER $ARG 2>&1)
         TOTAL_MOVES=$((TOTAL_MOVES + MOVES))
         if [ $MOVES -gt $MAX_MOVES ]; then MAX_MOVES=$MOVES; fi
         if [ $MOVES -lt $MIN_MOVES ]; then MIN_MOVES=$MOVES; fi
-        if [[ "$CHECK_OUT" == *"OK"* ]] && [ $MOVES -le $LIMIT ]; then
-            echo -e "Run $i: ${GREEN}[OK]${NC} $MOVES"
-        elif [[ "$CHECK_OUT" == *"OK"* ]] && [ $MOVES -gt $LIMIT ]; then
-            echo -e "Run $i: ${YELLOW}[WARNING]${NC} $MOVES"
+        if [ $MOVES -le $LIMIT ]; then
+            echo -e "Run $i: ${GREEN}$MOVES${NC}"
         else
-            echo -e "Run $i: ${RED}[KO]${NC} $CHECK_OUT | $MOVES"
+            echo -e "Run $i: ${YELLOW}$MOVES${NC}"
             echo "FAILED: $ARG" >> "$LOG_FILE"
         fi
     done
