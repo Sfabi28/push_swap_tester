@@ -1,5 +1,7 @@
 # push_swap Tester
 
+![Last Commit](https://img.shields.io/github/last-commit/Sfabi28/push_swap_tester?style=for-the-badge&color=red)
+
 A comprehensive and strict tester for the 42 **push_swap** project. It supports both Mandatory and Bonus parts, includes memory leak detection via Valgrind, and generates detailed logs for debugging.
 
 ## 📁 1. Installation
