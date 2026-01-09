@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **CHANGELOG.md**: trace changes of the project
 - **Auto-Cleaner**: Added auto cleaning at the end of the tester
+- **QLF**: Quality of life improvements
 
 ### Fixed
 - Fixed a bug that cause errors happening in "error managment" not being saved in the log file.

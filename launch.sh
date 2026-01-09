@@ -15,6 +15,10 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 RESET='\033[0m'
 
+clear
+
+echo -e "\n${CYAN}=== PUSH_SWAP TESTER ===${RESET}\n"
+
 check_dev_mode() {
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
@@ -72,7 +76,7 @@ echo "-----------------------------------" >> "$LOG_FILE"
 
 echo ""
 
-echo -e "${CYAN} Checking Norminette...${RESET}"
+echo -e "${CYAN}Checking Norminette...${RESET}"
 
 TESTER_DIR=$(basename "$PWD")
 
@@ -249,8 +253,6 @@ run_tester() {
     make fclean -C "$SOURCE_PATH" > /dev/null
     rm -f "$CHECKER"
 }
-
-echo -e "\n${CYAN}=== PUSH_SWAP TESTER ===${RESET}"
 
 if [ -z "$1" ]; then
     run_tester "COMPLETE"
