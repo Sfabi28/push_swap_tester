@@ -232,7 +232,7 @@ run_tester() {
     if [ "$MODE" == "COMPLETE" ]; then
         check_error_management
         check_allowed_function
-        run_test_loop 3 3 5
+        run_test_loop 3 4 5
         run_test_loop 5 12 10
         run_test_loop 100 700 20
         run_test_loop 500 5500 20
@@ -244,6 +244,8 @@ run_tester() {
         check_allowed_function
         run_test_loop 500 5500 $COUNT
     fi
+
+    make fclean -C "$SOURCE_PATH" > /dev/null
 }
 
 echo -e "\n${CYAN}=== PUSH_SWAP TESTER ===${RESET}"
