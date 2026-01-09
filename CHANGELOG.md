@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 - **CHANGELOG.md**: trace changes of the project
 - **Auto-Cleaner**: Added auto cleaning at the end of the tester
 
+### Fixed
+- Fixed a bug that cause errors happening in "error managment" not being saved in the log file.
+
 ## [1.1.0] - 2025-12-24
 ### Added
 - **Auto-Updater**: The script now checks for updates automatically on startup.

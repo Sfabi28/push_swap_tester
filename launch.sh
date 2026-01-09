@@ -131,6 +131,7 @@ check_error_management() {
             echo -e "Input '$ARG': ${GREEN}[OK]${NC}"
         else
             echo -e "Input '$ARG': ${RED}[KO]${NC}"
+            echo "ERROR TEST FAILED: Input '$ARG'" >> "$LOG_FILE"
         fi
     done
 }
@@ -246,6 +247,7 @@ run_tester() {
     fi
 
     make fclean -C "$SOURCE_PATH" > /dev/null
+    rm -f "$CHECKER"
 }
 
 echo -e "\n${CYAN}=== PUSH_SWAP TESTER ===${RESET}"
