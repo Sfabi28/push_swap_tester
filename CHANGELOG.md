@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-01-13
+### Added
+- **Executable**: Now the tester is already executable
+
 ## [1.2.0] - 2026-01-08
 ### Added
 - **CHANGELOG.md**: trace changes of the project

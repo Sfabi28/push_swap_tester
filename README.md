@@ -28,16 +28,8 @@ echo "push_swap_tester/" >> .gitignore
 
 Ensure that the path is right and set a proper timeout time **INSIDE** the `launch.sh` file
 
-## 🚀 2. First Run
 
-
-Before running the tester for the first time, you must grant execution permissions to the main script:
-
-```bash
-chmod +x launch.sh
-```
-
-## ⚙️ 3. Usage Commands
+## ⚙️ 2. Usage Commands
 -----------------
 The tester supports different modes.
 
@@ -48,7 +40,7 @@ Command,Description
 ./launch.sh [100|500] + n, Runs n tests on 100 or 500 numbers. 
 ```
 
-## 📊 4. Results Legend
+## 📊 3. Results Legend
 -----------------
 ```text
 [OK]   : The output list is in order.
