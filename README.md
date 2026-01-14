@@ -15,7 +15,10 @@ Ensure that the folder of this tester (`push_swap_tester`) is located **INSIDE**
     ├── push_swap.h
     ├── *.c (your source files)
     └── push_swap_tester/       <--- YOU ARE HERE
-          ├── launch.sh
+          ├── .launch.sh
+          ├── Makefile
+          ├── README.md
+          ├── CHANGELOG.md
           └── checker
 
 ```
@@ -35,9 +38,9 @@ The tester supports different modes.
 
 ```text
 Command,Description
-./launch.sh ,Runs ALL tests (Mandatory + Valgrind).
-./launch.sh [100|500] ,Runs 100 tests on 100 or 500 numbers.
-./launch.sh [100|500] + n, Runs n tests on 100 or 500 numbers. 
+make ,Runs ALL tests (Mandatory + Valgrind).
+make [100|500] ,Runs 20 tests on 100 or 500 numbers.
+make [100|500] + n, Runs n tests on 100 or 500 numbers. 
 ```
 
 ## 📊 3. Results Legend
