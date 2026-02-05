@@ -68,7 +68,7 @@ check_updates() {
 check_dev_mode
 check_updates
 
-rm -f errors.log valgrind_out.txt
+rm -f test_results.log valgrind_log.txt
 
 echo "=== TEST SESSION STARTED: $(date) ===" > "$LOG_FILE"
 echo "Detailed logs below." >> "$LOG_FILE"
@@ -195,15 +195,29 @@ check_allowed_function() {
 
 check_leaks() {
     echo -e "\n${BLUE}=== LEAK CHECK ===${NC}"
-    ARG=$(generate_arg 10)
-    $VALGRIND $PUSH_SWAP $ARG > /dev/null 2> valgrind_out.txt
-    if grep -q "All heap blocks were freed" valgrind_out.txt; then
-        echo -e "${GREEN}[CLEAN]${NC}"
-    else
+    for ((i=1; i<=10; i++)); do
+        ARG=$(generate_arg 10)
+        $VALGRIND $PUSH_SWAP $ARG > /dev/null 2>> valgrind_log.txt
+    done
+
+    ARG=$(generate_arg 100)
+    $VALGRIND $PUSH_SWAP $ARG > /dev/null 2>> valgrind_log.txt
+
+
+    ARG=$(generate_arg 0)
+    $VALGRIND $PUSH_SWAP $ARG > /dev/null 2>> valgrind_log.txt
+
+
+    ARG="a b c d"
+    $VALGRIND $PUSH_SWAP $ARG > /dev/null 2>> valgrind_log.txt
+
+    if grep -E -q "definitely lost: [1-9][0-9]* bytes" valgrind_log.txt || \
+       grep -E -q "ERROR SUMMARY: [1-9][0-9]* errors" valgrind_log.txt; then
         echo -e "${RED}[LEAKS]${NC}"
-        cat valgrind_out.txt
+    else
+        echo -e "${GREEN}[CLEAN]${NC}"
+        rm -f valgrind_log.txt
     fi
-    rm -f valgrind_out.txt
 }
 
 run_test_loop() {
@@ -235,8 +249,8 @@ run_tester() {
     COUNT=${2:-20}
 
     if [ "$MODE" == "COMPLETE" ]; then
-        check_error_management
         check_allowed_function
+        check_error_management
         run_test_loop 3 4 5
         run_test_loop 5 12 10
         run_test_loop 100 700 20
