@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-02-05
+### Added
+- **VALGRIND**: Improved valgrind tests
+
+### Fixed
+- Makefile not working properly.
+
 ## [1.4.0] - 2026-01-14
 ### Added
 - **Makefile**: Added Makefile
