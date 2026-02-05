@@ -224,7 +224,7 @@ run_test_loop() {
     QTY=$1
     LIMIT=$2
     RUNS=$3
-    echo -e "\n${BLUE}=== TEST $QTY NUMBERS ($RUNS run) < $LIMIT ===${NC}"
+    echo -e "\n${BLUE}=== TEST $QTY NUMBERS ($RUNS run) <= $LIMIT ===${NC}"
     reset_stats
     for ((i=1; i<=RUNS; i++)); do
         ARG=$(generate_arg $QTY)
@@ -236,12 +236,11 @@ run_test_loop() {
             echo -e "Run $i: ${GREEN}$MOVES${NC}"
         else
             echo -e "Run $i: ${YELLOW}$MOVES${NC}"
-            echo "FAILED: $ARG" >> "$LOG_FILE"
+            echo "OVER MAX MOVES: $ARG" >> "$LOG_FILE"
         fi
     done
     AVG=$((TOTAL_MOVES / RUNS))
     echo -e "Min: $MIN_MOVES | Max: $MAX_MOVES | ${YELLOW}Avg: $AVG${NC}"
-    if [ $AVG -le $LIMIT ]; then echo -e "${GREEN}PASSED${NC}"; else echo -e "${RED}FAILED${NC}"; fi
 }
 
 run_tester() {
@@ -251,7 +250,7 @@ run_tester() {
     if [ "$MODE" == "COMPLETE" ]; then
         check_allowed_function
         check_error_management
-        run_test_loop 3 4 5
+        run_test_loop 3 2 5
         run_test_loop 5 12 10
         run_test_loop 100 700 20
         run_test_loop 500 5500 20
