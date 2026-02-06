@@ -275,7 +275,7 @@ run_tester() {
         run_test_loop 3 2 5
         run_test_loop 5 12 10
         run_test_loop 100 700 20
-        run_test_loop 500 5500 20
+        run_test_loop 500 5500 50
         check_leaks
     elif [ "$MODE" == "100" ]; then
         check_allowed_function
