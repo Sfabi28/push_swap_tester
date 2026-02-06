@@ -19,6 +19,11 @@ clear
 
 echo -e "\n${CYAN}=== PUSH_SWAP TESTER ===${RESET}\n"
 
+echo "" > ".empty_check"
+
+EMPTY="./.empty_check"
+chmod 777 $EMPTY
+
 check_dev_mode() {
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
@@ -238,7 +243,15 @@ run_test_loop() {
         OUT=$($PUSH_SWAP $ARG)
         MOVES=$(echo "$OUT" | wc -l)
         if [ $USE_CHECKER -eq 1 ]; then
-            if echo "$OUT" | $CHECKER $ARG 2>/dev/null | grep -q "OK"; then
+
+            if [ -z "$OUT" ]; then
+                if $EMPTY | $CHECKER $ARG 2>/dev/null | grep -q "OK"; then
+                    echo -e "Run $i: ${GREEN}0${NC}"
+                else
+                    echo -e "Run $i: ${RED}0 (NOT SORTED)${NC}"
+                    echo "NOT SORTED: $ARG, MOVES: .$OUT." >> "$LOG_FILE"
+                fi
+            elif echo "$OUT" | $CHECKER $ARG 2>/dev/null | grep -q "OK"; then
                 if [ $MOVES -le $LIMIT ]; then
                     echo -e "Run $i: ${GREEN}$MOVES${NC}"
                 else
@@ -246,8 +259,8 @@ run_test_loop() {
                     echo "OVER MAX MOVES: $ARG" >> "$LOG_FILE"
                 fi
             else
-                echo -e "Run $i: ${RED}$MOVES (NOT SOR)${NC}"
-                echo "NOT SORTED: $ARG" >> "$LOG_FILE"
+                echo -e "Run $i: ${RED}$MOVES (NOT SORTED)${NC}"
+                echo "NOT SORTED: $ARG, MOVES: .$OUT." >> "$LOG_FILE"
             fi
         else
             if [ $MOVES -le $LIMIT ]; then
@@ -301,5 +314,7 @@ elif [[ "$1" == "500" && -n "$2" ]]; then
 else
     echo -e "${YELLOW}Invalid arguments. Usage: ./launch.sh [100|500] [count]${RESET}"
 fi
+
+rm -f .empty_check
 
 echo -e "\n${CYAN}=== DONE ===${RESET}"
