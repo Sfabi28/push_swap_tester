@@ -120,7 +120,7 @@ VALGRIND="valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kin
 
 generate_arg() {
     count=$1
-    python3 -c "import random; print(' '.join(map(str, random.sample(range(-10000, 10000), $count))))"
+    python3 -c "import random; print(' '.join(map(str, random.sample(range(-25000, 25000), $count))))"
 }
 
 reset_stats() {
@@ -296,6 +296,9 @@ run_tester() {
     elif [ "$MODE" == "500" ]; then
         check_allowed_function
         run_test_loop 500 5500 $COUNT
+    else
+        check_allowed_function
+        run_test_loop "$MODE" 100000000 $COUNT
     fi
 
     make fclean -C "$SOURCE_PATH" > /dev/null
@@ -311,8 +314,12 @@ elif [[ "$1" == "100" && -n "$2" ]]; then
     run_tester "100" "$2"
 elif [[ "$1" == "500" && -n "$2" ]]; then
     run_tester "500" "$2"
+elif [[ "$1" =~ ^[0-9]+$ && -z "$2" ]]; then
+    run_tester "$1"
+elif [[ "$1" =~ ^[0-9]+$ && -n "$2" ]]; then
+    run_tester "$1" "$2"
 else
-    echo -e "${YELLOW}Invalid arguments. Usage: ./launch.sh [100|500] [count]${RESET}"
+    echo -e "${YELLOW}Invalid arguments. Usage: ./launch.sh [num] [count]${RESET}"
 fi
 
 rm -f .empty_check

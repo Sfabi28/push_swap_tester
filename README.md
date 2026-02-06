@@ -40,7 +40,9 @@ The tester supports different modes.
 Command,Description
 make ,Runs ALL tests (Mandatory + Valgrind).
 make [100|500] ,Runs 20 tests on 100 or 500 numbers.
-make [100|500] + n, Runs n tests on 100 or 500 numbers. 
+make [100|500] + n, Runs n tests on 100 or 500 numbers.
+make m + n, Runs n tests on m numbers.
+
 ```
 
 ## 📊 3. Results Legend

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-02-06
+### Added
+- **TESTS**: Custom numbers tests
+
 ## [1.5.0] - 2026-02-05
 ### Added
 - **VALGRIND**: Improved valgrind tests
