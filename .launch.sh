@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PUSH_SWAP="../push_swap"
-CHECKER="./checker"
+CHECKER="./.checker"
 SOURCE_PATH=".."
 
 TESTER_NAME="push_swap_tester"
@@ -226,18 +226,40 @@ run_test_loop() {
     RUNS=$3
     echo -e "\n${BLUE}=== TEST $QTY NUMBERS ($RUNS run) <= $LIMIT ===${NC}"
     reset_stats
+    if [ ! -x "$CHECKER" ]; then
+        echo -e "${YELLOW}Warning: $CHECKER not found or not executable; falling back to move-count only.${NC}"
+        USE_CHECKER=0
+    else
+        USE_CHECKER=1
+    fi
+
     for ((i=1; i<=RUNS; i++)); do
         ARG=$(generate_arg $QTY)
-        MOVES=$($PUSH_SWAP $ARG | wc -l)
+        OUT=$($PUSH_SWAP $ARG)
+        MOVES=$(echo "$OUT" | wc -l)
+        if [ $USE_CHECKER -eq 1 ]; then
+            if echo "$OUT" | $CHECKER $ARG 2>/dev/null | grep -q "OK"; then
+                if [ $MOVES -le $LIMIT ]; then
+                    echo -e "Run $i: ${GREEN}$MOVES${NC}"
+                else
+                    echo -e "Run $i: ${YELLOW}$MOVES${NC}"
+                    echo "OVER MAX MOVES: $ARG" >> "$LOG_FILE"
+                fi
+            else
+                echo -e "Run $i: ${RED}$MOVES (NOT SOR)${NC}"
+                echo "NOT SORTED: $ARG" >> "$LOG_FILE"
+            fi
+        else
+            if [ $MOVES -le $LIMIT ]; then
+                echo -e "Run $i: ${GREEN}$MOVES${NC}"
+            else
+                echo -e "Run $i: ${YELLOW}$MOVES${NC}"
+                echo "OVER MAX MOVES: $ARG" >> "$LOG_FILE"
+            fi
+        fi
         TOTAL_MOVES=$((TOTAL_MOVES + MOVES))
         if [ $MOVES -gt $MAX_MOVES ]; then MAX_MOVES=$MOVES; fi
         if [ $MOVES -lt $MIN_MOVES ]; then MIN_MOVES=$MOVES; fi
-        if [ $MOVES -le $LIMIT ]; then
-            echo -e "Run $i: ${GREEN}$MOVES${NC}"
-        else
-            echo -e "Run $i: ${YELLOW}$MOVES${NC}"
-            echo "OVER MAX MOVES: $ARG" >> "$LOG_FILE"
-        fi
     done
     AVG=$((TOTAL_MOVES / RUNS))
     echo -e "Min: $MIN_MOVES | Max: $MAX_MOVES | ${YELLOW}Avg: $AVG${NC}"
@@ -264,7 +286,6 @@ run_tester() {
     fi
 
     make fclean -C "$SOURCE_PATH" > /dev/null
-    rm -f "$CHECKER"
 }
 
 if [ -z "$1" ]; then

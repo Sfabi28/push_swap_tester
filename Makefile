@@ -1,5 +1,5 @@
 
-.PHONY: all m b val
+.PHONY: all
 
 ARGS := $(MAKECMDGOALS)
 
