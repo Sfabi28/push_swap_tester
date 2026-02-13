@@ -2,6 +2,7 @@
 
 PUSH_SWAP="../push_swap"
 CHECKER="./.checker"
+USER_CHECKER="../checker"
 SOURCE_PATH=".."
 
 TESTER_NAME="push_swap_tester"
@@ -278,6 +279,94 @@ run_test_loop() {
     echo -e "Min: $MIN_MOVES | Max: $MAX_MOVES | ${YELLOW}Avg: $AVG${NC}"
 }
 
+check_checker_error_management() {
+    echo -e "\n${BLUE}=== CHECKER ERROR MANAGEMENT ===${NC}"
+    
+    declare -a ERR_ARGS=("a b c" "1 2 3 2" "2147483648" "-2147483649" "")
+    for ARG in "${ERR_ARGS[@]}"; do
+        OUT=$($USER_CHECKER $ARG < /dev/null 2>&1)
+        
+        if [ -z "$ARG" ]; then
+             if [ -z "$OUT" ]; then 
+                 echo -e "Empty Input: ${GREEN}[OK]${NC}"
+             else 
+                 echo -e "Empty Input: ${RED}[KO]${NC}"
+             fi
+        elif [ "$OUT" == "Error" ]; then
+            echo -e "Input '$ARG': ${GREEN}[OK]${NC}"
+        else
+            echo -e "Input '$ARG': ${RED}[KO]${NC}"
+            echo "ERROR TEST FAILED: Input '$ARG' (Output: $OUT)" >> "$LOG_FILE"
+        fi
+    done
+
+    ERR_ARGS=( "pa\npb\na" "b c" "psa" "p a" "ss\nsa\nsb\nsa sb" "sa " " sa" "SA" "\n" "pa\n\npb" "rrra" "r" "sa\t")
+    for MOVES in "${ERR_ARGS[@]}"; do
+        OUT=$(printf "%b\n" "$MOVES" | $USER_CHECKER 1 2 3 2>&1)
+        
+        if echo "$OUT" | grep -q "Error"; then
+            echo -e "Read '${MOVES//$'\n'/\\n}': ${GREEN}[OK]${NC}"
+        else
+            echo -e "Read '${MOVES//$'\n'/\\n}': ${RED}[KO]${NC}"
+            echo "INSTRUCTION TEST FAILED: Moves '$MOVES' - Output: '$OUT'" >> "$LOG_FILE"
+        fi
+    done
+}
+
+run_checker_loop() {
+    QTY=$1
+    RUNS=$2
+    echo -e "\n${BLUE}=== CHECKER TEST $QTY NUMBERS ($RUNS run) ===${NC}"
+    
+    for ((i=1; i<=RUNS; i++)); do
+        ARG=$(generate_arg $QTY)
+        OUT=$($PUSH_SWAP $ARG)
+        
+        ORACLE_OUT=$(echo "$OUT" | $CHECKER $ARG)
+        USER_OUT=$(echo "$OUT" | $USER_CHECKER $ARG)
+        
+        if [ "$ORACLE_OUT" == "$USER_OUT" ]; then
+            echo -e "Run $i [OK TEST]: ${GREEN}PASSED${NC}"
+        else
+            echo -e "Run $i [OK TEST]: ${RED}NOT PASSED${NC}"
+            echo -e "Run $i [OK TEST]: NUMBERS: $ARG\n USER_CHECKER: $USER_OUT  REAL_CHECKER: $ORACLE_OUT" >> "$LOG_FILE"
+        fi
+        
+        if [ -z "$OUT" ]; then
+            echo -e "Run $i [KO TEST]: ${YELLOW}SKIPPED (Already sorted)${NC}"
+        else
+            SABOTAGED_OUT=$(echo "$OUT" | sed '$d')
+            ORACLE_OUT=$(echo "$SABOTAGED_OUT" | $CHECKER $ARG)
+            USER_OUT=$(echo "$SABOTAGED_OUT" | $USER_CHECKER $ARG)
+            
+            if [ "$ORACLE_OUT" == "$USER_OUT" ]; then
+                echo -e "Run $i [KO TEST]: ${GREEN}PASSED${NC}"
+            else
+                echo -e "Run $i [KO TEST]: ${RED}NOT PASSED${NC}"
+                echo -e "Run $i [KO TEST]: NUMBERS: $ARG\n USER_CHECKER: $USER_OUT  REAL_CHECKER: $ORACLE_OUT" >> "$LOG_FILE"
+            fi
+        fi
+    done
+}
+
+run_checker() {
+
+    echo -e "${BLUE}Compiling User Checker...${NC}"
+    make bonus -C "$SOURCE_PATH" > /dev/null
+
+    if [ ! -f "$USER_CHECKER" ]; then
+        echo -e "${RED}Error: Compilation failed or binary not found.${NC}"
+        exit 1
+    fi
+
+    check_allowed_function
+    check_checker_error_management
+    run_checker_loop 3 5
+    run_checker_loop 5 5
+    run_checker_loop 100 5
+    run_checker_loop 500 5
+}
+
 run_tester() {
     MODE=$1
     COUNT=${2:-20}
@@ -318,6 +407,8 @@ elif [[ "$1" =~ ^[0-9]+$ && -z "$2" ]]; then
     run_tester "$1"
 elif [[ "$1" =~ ^[0-9]+$ && -n "$2" ]]; then
     run_tester "$1" "$2"
+elif [[ "$1" == "b" ]]; then
+    run_checker
 else
     echo -e "${YELLOW}Invalid arguments. Usage: ./launch.sh [num] [count]${RESET}"
 fi
