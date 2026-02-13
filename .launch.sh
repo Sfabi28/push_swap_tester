@@ -28,7 +28,7 @@ chmod 777 $EMPTY
 check_dev_mode() {
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
-    if [ "$CURRENT_BRANCH" == "dev" ]; then
+    if [[ "$CURRENT_BRANCH" == "dev" || "$CURRENT_BRANCH" == "Dev" ]]; then
         echo -e "\n${MAGENTA}⚠️  WARNING: YOU ARE IN DEVELOPER MODE (dev branch) ⚠️${NC}"
         echo -e "${MAGENTA}This version might be unstable.${NC}"
         echo -e "If you are a student, please switch to stable: ${CYAN}git checkout main${NC}\n"
@@ -313,6 +313,32 @@ check_checker_error_management() {
     done
 }
 
+check_checker_leaks() {
+    echo -e "\n${BLUE}=== CHECKER LEAK CHECK ===${NC}"
+    rm -f valgrind_log.txt
+
+    ARG="1 2 3 1"
+    $VALGRIND $USER_CHECKER $ARG < /dev/null > /dev/null 2>> valgrind_log.txt
+    
+    ARG="a b c"
+    $VALGRIND $USER_CHECKER $ARG < /dev/null > /dev/null 2>> valgrind_log.txt
+
+    ARG="1 5 2 4"
+    printf "sa\npb\nfake_move\n" | $VALGRIND $USER_CHECKER $ARG > /dev/null 2>> valgrind_log.txt
+
+    ARG=$(generate_arg 100)
+    MOVES=$($PUSH_SWAP $ARG)
+    printf "%s" "$MOVES" | $VALGRIND $USER_CHECKER $ARG > /dev/null 2>> valgrind_log.txt
+
+    if grep -E -q "definitely lost: [1-9][0-9]* bytes|ERROR SUMMARY: [1-9][0-9]* errors" valgrind_log.txt; then
+        echo -e "${RED}[LEAKS DETECTED]${NC}"
+        echo "Check valgrind_log.txt for details."
+    else
+        echo -e "${GREEN}[CLEAN]${NC}"
+        rm -f valgrind_log.txt
+    fi
+}
+
 run_checker_loop() {
     QTY=$1
     RUNS=$2
@@ -320,7 +346,7 @@ run_checker_loop() {
     
     for ((i=1; i<=RUNS; i++)); do
         ARG=$(generate_arg $QTY)
-        OUT=$($PUSH_SWAP $ARG)
+        OUT=$($PUSH_SWAP $ARG  < /dev/null 2>&1)
         
         ORACLE_OUT=$(echo "$OUT" | $CHECKER $ARG)
         USER_OUT=$(echo "$OUT" | $USER_CHECKER $ARG)
@@ -365,6 +391,7 @@ run_checker() {
     run_checker_loop 5 5
     run_checker_loop 100 5
     run_checker_loop 500 5
+    check_checker_leaks
 }
 
 run_tester() {
