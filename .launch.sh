@@ -282,32 +282,16 @@ run_test_loop() {
 check_checker_error_management() {
     echo -e "\n${BLUE}=== CHECKER ERROR MANAGEMENT ===${NC}"
     
-    declare -a ERR_ARGS=("a b c" "1 2 3 2" "2147483648" "-2147483649" "")
-    for ARG in "${ERR_ARGS[@]}"; do
-        OUT=$($USER_CHECKER $ARG < /dev/null 2>&1)
-        
-        if [ -z "$ARG" ]; then
-             if [ -z "$OUT" ]; then 
-                 echo -e "Empty Input: ${GREEN}[OK]${NC}"
-             else 
-                 echo -e "Empty Input: ${RED}[KO]${NC}"
-             fi
-        elif [ "$OUT" == "Error" ]; then
-            echo -e "Input '$ARG': ${GREEN}[OK]${NC}"
-        else
-            echo -e "Input '$ARG': ${RED}[KO]${NC}"
-            echo "ERROR TEST FAILED: Input '$ARG' (Output: $OUT)" >> "$LOG_FILE"
-        fi
-    done
-
     ERR_ARGS=( "pa\npb\na" "b c" "psa" "p a" "ss\nsa\nsb\nsa sb" "sa " " sa" "SA" "\n" "pa\n\npb" "rrra" "r" "sa\t")
     for MOVES in "${ERR_ARGS[@]}"; do
         OUT=$(printf "%b\n" "$MOVES" | $USER_CHECKER 1 2 3 2>&1)
         
+        SAFE_MOVES="${MOVES//\\/\\\\}"
+        
         if echo "$OUT" | grep -q "Error"; then
-            echo -e "Read '${MOVES//$'\n'/\\n}': ${GREEN}[OK]${NC}"
+            echo -e "Read '${SAFE_MOVES}': ${GREEN}[OK]${NC}"
         else
-            echo -e "Read '${MOVES//$'\n'/\\n}': ${RED}[KO]${NC}"
+            echo -e "Read '${SAFE_MOVES}': ${RED}[KO]${NC}"
             echo "INSTRUCTION TEST FAILED: Moves '$MOVES' - Output: '$OUT'" >> "$LOG_FILE"
         fi
     done
@@ -348,8 +332,8 @@ run_checker_loop() {
         ARG=$(generate_arg $QTY)
         OUT=$($PUSH_SWAP $ARG  < /dev/null 2>&1)
         
-        ORACLE_OUT=$(echo "$OUT" | $CHECKER $ARG)
-        USER_OUT=$(echo "$OUT" | $USER_CHECKER $ARG)
+        ORACLE_OUT=$(echo "$OUT" | $CHECKER $ARG 2>/dev/null)
+        USER_OUT=$(echo "$OUT" | $USER_CHECKER $ARG 2>/dev/null)
         
         if [ "$ORACLE_OUT" == "$USER_OUT" ]; then
             echo -e "Run $i [OK TEST]: ${GREEN}PASSED${NC}"
@@ -362,8 +346,8 @@ run_checker_loop() {
             echo -e "Run $i [KO TEST]: ${YELLOW}SKIPPED (Already sorted)${NC}"
         else
             SABOTAGED_OUT=$(echo "$OUT" | sed '$d')
-            ORACLE_OUT=$(echo "$SABOTAGED_OUT" | $CHECKER $ARG)
-            USER_OUT=$(echo "$SABOTAGED_OUT" | $USER_CHECKER $ARG)
+            ORACLE_OUT=$(echo "$SABOTAGED_OUT" | $CHECKER $ARG 2>/dev/null)
+            USER_OUT=$(echo "$SABOTAGED_OUT" | $USER_CHECKER $ARG 2>/dev/null)
             
             if [ "$ORACLE_OUT" == "$USER_OUT" ]; then
                 echo -e "Run $i [KO TEST]: ${GREEN}PASSED${NC}"

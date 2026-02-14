@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-02-14
+### Added
+- **BONUS**: Added bonus part tests
+
 ## [1.6.0] - 2026-02-06
 ### Added
 - **TESTS**: Custom numbers tests
