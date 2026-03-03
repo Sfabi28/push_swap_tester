@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TIMEOUT_TIME=5
+
 PUSH_SWAP="../push_swap"
 CHECKER="./.checker"
 USER_CHECKER="../checker"
@@ -130,6 +132,18 @@ reset_stats() {
     MIN_MOVES=100000
 }
 
+run_push_swap_with_timeout() {
+    local arg="$1"
+
+    if command -v timeout >/dev/null 2>&1; then
+        timeout "$TIMEOUT_TIME" "$PUSH_SWAP" $arg
+        return $?
+    fi
+
+    "$PUSH_SWAP" $arg
+    return $?
+}
+
 check_error_management() {
     echo -e "\n${BLUE}=== ERROR MANAGEMENT ===${NC}"
     declare -a ERR_ARGS=("a b c" "1 2 3 2" "2147483648" "-2147483649" "")
@@ -230,6 +244,7 @@ run_test_loop() {
     QTY=$1
     LIMIT=$2
     RUNS=$3
+    EXECUTED_RUNS=0
     echo -e "\n${BLUE}=== TEST $QTY NUMBERS ($RUNS run) <= $LIMIT ===${NC}"
     reset_stats
     if [ ! -x "$CHECKER" ]; then
@@ -241,7 +256,15 @@ run_test_loop() {
 
     for ((i=1; i<=RUNS; i++)); do
         ARG=$(generate_arg $QTY)
-        OUT=$($PUSH_SWAP $ARG)
+        OUT=$(run_push_swap_with_timeout "$ARG" 2>/dev/null)
+        STATUS=$?
+
+        if [ $STATUS -eq 124 ]; then
+            echo -e "Run $i: ${RED}[TIMEOUT]${NC}"
+            echo "TIMEOUT: $ARG" >> "$LOG_FILE"
+            continue
+        fi
+
         MOVES=$(echo "$OUT" | wc -l)
         if [ $USE_CHECKER -eq 1 ]; then
 
@@ -272,10 +295,17 @@ run_test_loop() {
             fi
         fi
         TOTAL_MOVES=$((TOTAL_MOVES + MOVES))
+        EXECUTED_RUNS=$((EXECUTED_RUNS + 1))
         if [ $MOVES -gt $MAX_MOVES ]; then MAX_MOVES=$MOVES; fi
         if [ $MOVES -lt $MIN_MOVES ]; then MIN_MOVES=$MOVES; fi
     done
-    AVG=$((TOTAL_MOVES / RUNS))
+
+    if [ $EXECUTED_RUNS -eq 0 ]; then
+        echo -e "${YELLOW}No completed runs (all timed out).${NC}"
+        return
+    fi
+
+    AVG=$((TOTAL_MOVES / EXECUTED_RUNS))
     echo -e "Min: $MIN_MOVES | Max: $MAX_MOVES | ${YELLOW}Avg: $AVG${NC}"
 }
 
@@ -330,7 +360,14 @@ run_checker_loop() {
     
     for ((i=1; i<=RUNS; i++)); do
         ARG=$(generate_arg $QTY)
-        OUT=$($PUSH_SWAP $ARG  < /dev/null 2>&1)
+        OUT=$(run_push_swap_with_timeout "$ARG" < /dev/null 2>&1)
+        STATUS=$?
+
+        if [ $STATUS -eq 124 ]; then
+            echo -e "Run $i: ${RED}[TIMEOUT]${NC}"
+            echo "TIMEOUT (CHECKER LOOP): $ARG" >> "$LOG_FILE"
+            continue
+        fi
         
         ORACLE_OUT=$(echo "$OUT" | $CHECKER $ARG 2>/dev/null)
         USER_OUT=$(echo "$OUT" | $USER_CHECKER $ARG 2>/dev/null)
