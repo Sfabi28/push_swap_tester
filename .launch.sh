@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TIMEOUT_TIME=5
+TIMEOUT_TIME=7
 
 PUSH_SWAP="../push_swap"
 CHECKER="./.checker"

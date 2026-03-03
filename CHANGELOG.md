@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-03-03
+### Added
+- **TIMEOUT**: Added timeout check
+
 ## [1.7.0] - 2026-02-14
 ### Added
 - **BONUS**: Added bonus part tests
