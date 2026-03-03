@@ -78,9 +78,9 @@ check_updates
 
 rm -f test_results.log valgrind_log.txt
 
-printf "=== TEST SESSION STARTED: %s ===\n" "$(date)" > "$LOG_FILE"
-printf "Detailed logs below.\n" >> "$LOG_FILE"
-printf "-----------------------------------\n" >> "$LOG_FILE"
+echo "=== TEST SESSION STARTED: $(date) ===" > "$LOG_FILE"
+echo "Detailed logs below." >> "$LOG_FILE"
+echo "-----------------------------------" >> "$LOG_FILE"
 
 echo ""
 
@@ -98,13 +98,13 @@ fi
 
 if [ -z "$NORM_OUT" ]; then
     echo -e "${GREEN}[NORM OK]${RESET}"
-    printf "[NORM OK]\n" >> "$LOG_FILE"
+    echo "[NORM OK]" >> "$LOG_FILE"
 else
     echo -e "${RED}[NORM KO]${RESET}"
     echo "$NORM_OUT"
-    printf "--- NORMINETTE ERRORS ---\n" >> "$LOG_FILE"
-    printf "%s\n" "$NORM_OUT" >> "$LOG_FILE"
-    printf "-------------------------\n" >> "$LOG_FILE"
+    echo "--- NORMINETTE ERRORS ---" >> "$LOG_FILE"
+    echo "$NORM_OUT" >> "$LOG_FILE"
+    echo "-------------------------" >> "$LOG_FILE"
 fi
 echo ""
 
@@ -165,7 +165,7 @@ check_error_management() {
             echo -e "Input '$ARG': ${GREEN}[OK]${NC}"
         else
             echo -e "Input '$ARG': ${RED}[KO]${NC}"
-            printf "ERROR TEST FAILED: Input '%s'\n" "$ARG" >> "$LOG_FILE"
+            echo "ERROR TEST FAILED: Input '$ARG'" >> "$LOG_FILE"
         fi
     done
 }
@@ -218,7 +218,7 @@ check_allowed_function() {
     else
         echo -e "${RED}Forbidden functions detected!${NC}"
         if [ -n "$LOG_FILE" ]; then
-            printf "FORBIDDEN FUNCTIONS DETECTED\n" >> "$LOG_FILE"
+            echo "FORBIDDEN FUNCTIONS DETECTED" >> "$LOG_FILE"
         fi
     fi
 }
@@ -232,7 +232,7 @@ check_leaks() {
         STATUS=$?
         if [ $STATUS -eq 124 ]; then
             echo -e "Valgrind run $i: ${RED}[TIMEOUT]${NC}"
-            printf "VALGRIND TIMEOUT: %s %s\n" "$PUSH_SWAP" "$ARG" >> "$LOG_FILE"
+            echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
             TIMEOUT_DETECTED=1
         fi
     done
@@ -242,7 +242,7 @@ check_leaks() {
     STATUS=$?
     if [ $STATUS -eq 124 ]; then
         echo -e "Valgrind run 100 nums: ${RED}[TIMEOUT]${NC}"
-        printf "VALGRIND TIMEOUT: %s %s\n" "$PUSH_SWAP" "$ARG" >> "$LOG_FILE"
+        echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
         TIMEOUT_DETECTED=1
     fi
 
@@ -252,7 +252,7 @@ check_leaks() {
     STATUS=$?
     if [ $STATUS -eq 124 ]; then
         echo -e "Valgrind run empty input: ${RED}[TIMEOUT]${NC}"
-        printf "VALGRIND TIMEOUT: %s %s\n" "$PUSH_SWAP" "$ARG" >> "$LOG_FILE"
+        echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
         TIMEOUT_DETECTED=1
     fi
 
@@ -262,7 +262,7 @@ check_leaks() {
     STATUS=$?
     if [ $STATUS -eq 124 ]; then
         echo -e "Valgrind run invalid input: ${RED}[TIMEOUT]${NC}"
-        printf "VALGRIND TIMEOUT: %s %s\n" "$PUSH_SWAP" "$ARG" >> "$LOG_FILE"
+        echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
         TIMEOUT_DETECTED=1
     fi
 
@@ -300,7 +300,7 @@ run_test_loop() {
 
         if [ $STATUS -eq 124 ]; then
             echo -e "Run $i: ${RED}[TIMEOUT]${NC}"
-            printf "TIMEOUT: %s\n" "$ARG" >> "$LOG_FILE"
+            echo "TIMEOUT: $ARG" >> "$LOG_FILE"
             continue
         fi
 
@@ -312,25 +312,25 @@ run_test_loop() {
                     echo -e "Run $i: ${GREEN}0${NC}"
                 else
                     echo -e "Run $i: ${RED}0 (NOT SORTED)${NC}"
-                    printf "NOT SORTED: %s, MOVES: .%s.\n" "$ARG" "$OUT" >> "$LOG_FILE"
+                    echo "NOT SORTED: $ARG, MOVES: .$OUT." >> "$LOG_FILE"
                 fi
             elif echo "$OUT" | $CHECKER $ARG 2>/dev/null | grep -q "OK"; then
                 if [ $MOVES -le $LIMIT ]; then
                     echo -e "Run $i: ${GREEN}$MOVES${NC}"
                 else
                     echo -e "Run $i: ${YELLOW}$MOVES${NC}"
-                    printf "OVER MAX MOVES: %s\n" "$ARG" >> "$LOG_FILE"
+                    echo "OVER MAX MOVES: $ARG" >> "$LOG_FILE"
                 fi
             else
                 echo -e "Run $i: ${RED}$MOVES (NOT SORTED)${NC}"
-                printf "NOT SORTED: %s, MOVES: .%s.\n" "$ARG" "$OUT" >> "$LOG_FILE"
+                echo "NOT SORTED: $ARG, MOVES: .$OUT." >> "$LOG_FILE"
             fi
         else
             if [ $MOVES -le $LIMIT ]; then
                 echo -e "Run $i: ${GREEN}$MOVES${NC}"
             else
                 echo -e "Run $i: ${YELLOW}$MOVES${NC}"
-                printf "OVER MAX MOVES: %s\n" "$ARG" >> "$LOG_FILE"
+                echo "OVER MAX MOVES: $ARG" >> "$LOG_FILE"
             fi
         fi
         TOTAL_MOVES=$((TOTAL_MOVES + MOVES))
@@ -353,7 +353,7 @@ check_checker_error_management() {
     
     ERR_ARGS=( "pa\npb\na" "b c" "psa" "p a" "ss\nsa\nsb\nsa sb" "sa " " sa" "SA" "\n" "pa\n\npb" "rrra" "r" "sa\t")
     for MOVES in "${ERR_ARGS[@]}"; do
-        OUT=$(printf "%b\n" "$MOVES" | $USER_CHECKER 1 2 3 2>&1)
+        OUT=$(echo -e "$MOVES" | $USER_CHECKER 1 2 3 2>&1)
         
         SAFE_MOVES="${MOVES//\\/\\\\}"
         
@@ -361,7 +361,7 @@ check_checker_error_management() {
             echo -e "Read '${SAFE_MOVES}': ${GREEN}[OK]${NC}"
         else
             echo -e "Read '${SAFE_MOVES}': ${RED}[KO]${NC}"
-            printf "INSTRUCTION TEST FAILED: Moves '%s' - Output: '%s'\n" "$MOVES" "$OUT" >> "$LOG_FILE"
+            echo "INSTRUCTION TEST FAILED: Moves '$MOVES' - Output: '$OUT'" >> "$LOG_FILE"
         fi
     done
 }
@@ -376,7 +376,7 @@ check_checker_leaks() {
     STATUS=$?
     if [ $STATUS -eq 124 ]; then
         echo -e "Checker valgrind duplicate test: ${RED}[TIMEOUT]${NC}"
-        printf "VALGRIND TIMEOUT: %s %s\n" "$USER_CHECKER" "$ARG" >> "$LOG_FILE"
+        echo "VALGRIND TIMEOUT: $USER_CHECKER $ARG" >> "$LOG_FILE"
         TIMEOUT_DETECTED=1
     fi
     
@@ -385,16 +385,16 @@ check_checker_leaks() {
     STATUS=$?
     if [ $STATUS -eq 124 ]; then
         echo -e "Checker valgrind invalid args: ${RED}[TIMEOUT]${NC}"
-        printf "VALGRIND TIMEOUT: %s %s\n" "$USER_CHECKER" "$ARG" >> "$LOG_FILE"
+        echo "VALGRIND TIMEOUT: $USER_CHECKER $ARG" >> "$LOG_FILE"
         TIMEOUT_DETECTED=1
     fi
 
     ARG="1 5 2 4"
-    printf "sa\npb\nfake_move\n" | run_valgrind_with_timeout "$USER_CHECKER" $ARG > /dev/null 2>> valgrind_log.txt
+    echo -e "sa\npb\nfake_move" | run_valgrind_with_timeout "$USER_CHECKER" $ARG > /dev/null 2>> valgrind_log.txt
     STATUS=$?
     if [ $STATUS -eq 124 ]; then
         echo -e "Checker valgrind bad moves: ${RED}[TIMEOUT]${NC}"
-        printf "VALGRIND TIMEOUT: %s %s (with moves)\n" "$USER_CHECKER" "$ARG" >> "$LOG_FILE"
+        echo "VALGRIND TIMEOUT: $USER_CHECKER $ARG (with moves)" >> "$LOG_FILE"
         TIMEOUT_DETECTED=1
     fi
 
@@ -403,14 +403,14 @@ check_checker_leaks() {
     STATUS=$?
     if [ $STATUS -eq 124 ]; then
         echo -e "Checker valgrind generator: ${RED}[TIMEOUT]${NC}"
-        printf "TIMEOUT: %s %s (checker leak setup)\n" "$PUSH_SWAP" "$ARG" >> "$LOG_FILE"
+        echo "TIMEOUT: $PUSH_SWAP $ARG (checker leak setup)" >> "$LOG_FILE"
         TIMEOUT_DETECTED=1
     else
-        printf "%s" "$MOVES" | run_valgrind_with_timeout "$USER_CHECKER" $ARG > /dev/null 2>> valgrind_log.txt
+        echo -n "$MOVES" | run_valgrind_with_timeout "$USER_CHECKER" $ARG > /dev/null 2>> valgrind_log.txt
         STATUS=$?
         if [ $STATUS -eq 124 ]; then
             echo -e "Checker valgrind replay: ${RED}[TIMEOUT]${NC}"
-            printf "VALGRIND TIMEOUT: %s %s (replay moves)\n" "$USER_CHECKER" "$ARG" >> "$LOG_FILE"
+            echo "VALGRIND TIMEOUT: $USER_CHECKER $ARG (replay moves)" >> "$LOG_FILE"
             TIMEOUT_DETECTED=1
         fi
     fi
@@ -440,7 +440,7 @@ run_checker_loop() {
 
         if [ $STATUS -eq 124 ]; then
             echo -e "Run $i: ${RED}[TIMEOUT]${NC}"
-            printf "TIMEOUT (CHECKER LOOP): %s\n" "$ARG" >> "$LOG_FILE"
+            echo "TIMEOUT (CHECKER LOOP): $ARG" >> "$LOG_FILE"
             continue
         fi
         
@@ -451,7 +451,8 @@ run_checker_loop() {
             echo -e "Run $i [OK TEST]: ${GREEN}PASSED${NC}"
         else
             echo -e "Run $i [OK TEST]: ${RED}NOT PASSED${NC}"
-            printf "Run %s [OK TEST]: NUMBERS: %s\n USER_CHECKER: %s  REAL_CHECKER: %s\n" "$i" "$ARG" "$USER_OUT" "$ORACLE_OUT" >> "$LOG_FILE"
+            echo "Run $i [OK TEST]: NUMBERS: $ARG" >> "$LOG_FILE"
+            echo " USER_CHECKER: $USER_OUT  REAL_CHECKER: $ORACLE_OUT" >> "$LOG_FILE"
         fi
         
         if [ -z "$OUT" ]; then
@@ -465,7 +466,8 @@ run_checker_loop() {
                 echo -e "Run $i [KO TEST]: ${GREEN}PASSED${NC}"
             else
                 echo -e "Run $i [KO TEST]: ${RED}NOT PASSED${NC}"
-                printf "Run %s [KO TEST]: NUMBERS: %s\n USER_CHECKER: %s  REAL_CHECKER: %s\n" "$i" "$ARG" "$USER_OUT" "$ORACLE_OUT" >> "$LOG_FILE"
+                echo "Run $i [KO TEST]: NUMBERS: $ARG" >> "$LOG_FILE"
+                echo " USER_CHECKER: $USER_OUT  REAL_CHECKER: $ORACLE_OUT" >> "$LOG_FILE"
             fi
         fi
     done
