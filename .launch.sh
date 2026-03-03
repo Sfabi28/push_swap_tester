@@ -144,6 +144,16 @@ run_push_swap_with_timeout() {
     return $?
 }
 
+run_valgrind_with_timeout() {
+    if command -v timeout >/dev/null 2>&1; then
+        timeout "$TIMEOUT_TIME" $VALGRIND "$@"
+        return $?
+    fi
+
+    $VALGRIND "$@"
+    return $?
+}
+
 check_error_management() {
     echo -e "\n${BLUE}=== ERROR MANAGEMENT ===${NC}"
     declare -a ERR_ARGS=("a b c" "1 2 3 2" "2147483648" "-2147483649" "")
@@ -215,21 +225,50 @@ check_allowed_function() {
 
 check_leaks() {
     echo -e "\n${BLUE}=== LEAK CHECK ===${NC}"
+    TIMEOUT_DETECTED=0
     for ((i=1; i<=10; i++)); do
         ARG=$(generate_arg 10)
-        $VALGRIND $PUSH_SWAP $ARG > /dev/null 2>> valgrind_log.txt
+        run_valgrind_with_timeout "$PUSH_SWAP" $ARG > /dev/null 2>> valgrind_log.txt
+        STATUS=$?
+        if [ $STATUS -eq 124 ]; then
+            echo -e "Valgrind run $i: ${RED}[TIMEOUT]${NC}"
+            echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
+            TIMEOUT_DETECTED=1
+        fi
     done
 
     ARG=$(generate_arg 100)
-    $VALGRIND $PUSH_SWAP $ARG > /dev/null 2>> valgrind_log.txt
+    run_valgrind_with_timeout "$PUSH_SWAP" $ARG > /dev/null 2>> valgrind_log.txt
+    STATUS=$?
+    if [ $STATUS -eq 124 ]; then
+        echo -e "Valgrind run 100 nums: ${RED}[TIMEOUT]${NC}"
+        echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
+        TIMEOUT_DETECTED=1
+    fi
 
 
     ARG=$(generate_arg 0)
-    $VALGRIND $PUSH_SWAP $ARG > /dev/null 2>> valgrind_log.txt
+    run_valgrind_with_timeout "$PUSH_SWAP" $ARG > /dev/null 2>> valgrind_log.txt
+    STATUS=$?
+    if [ $STATUS -eq 124 ]; then
+        echo -e "Valgrind run empty input: ${RED}[TIMEOUT]${NC}"
+        echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
+        TIMEOUT_DETECTED=1
+    fi
 
 
     ARG="a b c d"
-    $VALGRIND $PUSH_SWAP $ARG > /dev/null 2>> valgrind_log.txt
+    run_valgrind_with_timeout "$PUSH_SWAP" $ARG > /dev/null 2>> valgrind_log.txt
+    STATUS=$?
+    if [ $STATUS -eq 124 ]; then
+        echo -e "Valgrind run invalid input: ${RED}[TIMEOUT]${NC}"
+        echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
+        TIMEOUT_DETECTED=1
+    fi
+
+    if [ $TIMEOUT_DETECTED -eq 1 ]; then
+        echo -e "${YELLOW}Some Valgrind runs timed out.${NC}"
+    fi
 
     if grep -E -q "definitely lost: [1-9][0-9]* bytes" valgrind_log.txt || \
        grep -E -q "ERROR SUMMARY: [1-9][0-9]* errors" valgrind_log.txt; then
@@ -330,19 +369,55 @@ check_checker_error_management() {
 check_checker_leaks() {
     echo -e "\n${BLUE}=== CHECKER LEAK CHECK ===${NC}"
     rm -f valgrind_log.txt
+    TIMEOUT_DETECTED=0
 
     ARG="1 2 3 1"
-    $VALGRIND $USER_CHECKER $ARG < /dev/null > /dev/null 2>> valgrind_log.txt
+    run_valgrind_with_timeout "$USER_CHECKER" $ARG < /dev/null > /dev/null 2>> valgrind_log.txt
+    STATUS=$?
+    if [ $STATUS -eq 124 ]; then
+        echo -e "Checker valgrind duplicate test: ${RED}[TIMEOUT]${NC}"
+        echo "VALGRIND TIMEOUT: $USER_CHECKER $ARG" >> "$LOG_FILE"
+        TIMEOUT_DETECTED=1
+    fi
     
     ARG="a b c"
-    $VALGRIND $USER_CHECKER $ARG < /dev/null > /dev/null 2>> valgrind_log.txt
+    run_valgrind_with_timeout "$USER_CHECKER" $ARG < /dev/null > /dev/null 2>> valgrind_log.txt
+    STATUS=$?
+    if [ $STATUS -eq 124 ]; then
+        echo -e "Checker valgrind invalid args: ${RED}[TIMEOUT]${NC}"
+        echo "VALGRIND TIMEOUT: $USER_CHECKER $ARG" >> "$LOG_FILE"
+        TIMEOUT_DETECTED=1
+    fi
 
     ARG="1 5 2 4"
-    printf "sa\npb\nfake_move\n" | $VALGRIND $USER_CHECKER $ARG > /dev/null 2>> valgrind_log.txt
+    printf "sa\npb\nfake_move\n" | run_valgrind_with_timeout "$USER_CHECKER" $ARG > /dev/null 2>> valgrind_log.txt
+    STATUS=$?
+    if [ $STATUS -eq 124 ]; then
+        echo -e "Checker valgrind bad moves: ${RED}[TIMEOUT]${NC}"
+        echo "VALGRIND TIMEOUT: $USER_CHECKER $ARG (with moves)" >> "$LOG_FILE"
+        TIMEOUT_DETECTED=1
+    fi
 
     ARG=$(generate_arg 100)
-    MOVES=$($PUSH_SWAP $ARG)
-    printf "%s" "$MOVES" | $VALGRIND $USER_CHECKER $ARG > /dev/null 2>> valgrind_log.txt
+    MOVES=$(run_push_swap_with_timeout "$ARG")
+    STATUS=$?
+    if [ $STATUS -eq 124 ]; then
+        echo -e "Checker valgrind generator: ${RED}[TIMEOUT]${NC}"
+        echo "TIMEOUT: $PUSH_SWAP $ARG (checker leak setup)" >> "$LOG_FILE"
+        TIMEOUT_DETECTED=1
+    else
+        printf "%s" "$MOVES" | run_valgrind_with_timeout "$USER_CHECKER" $ARG > /dev/null 2>> valgrind_log.txt
+        STATUS=$?
+        if [ $STATUS -eq 124 ]; then
+            echo -e "Checker valgrind replay: ${RED}[TIMEOUT]${NC}"
+            echo "VALGRIND TIMEOUT: $USER_CHECKER $ARG (replay moves)" >> "$LOG_FILE"
+            TIMEOUT_DETECTED=1
+        fi
+    fi
+
+    if [ $TIMEOUT_DETECTED -eq 1 ]; then
+        echo -e "${YELLOW}Some checker Valgrind runs timed out.${NC}"
+    fi
 
     if grep -E -q "definitely lost: [1-9][0-9]* bytes|ERROR SUMMARY: [1-9][0-9]* errors" valgrind_log.txt; then
         echo -e "${RED}[LEAKS DETECTED]${NC}"
