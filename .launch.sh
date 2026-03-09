@@ -456,7 +456,7 @@ run_checker_loop() {
         fi
         
         if [ -z "$OUT" ]; then
-            echo -e "Run $i [KO TEST]: ${YELLOW}SKIPPED (Already sorted)${NC}"
+            echo -e "Run $i [KO TEST]: ${GREEN}SKIPPED (Already sorted)${NC}"
         else
             SABOTAGED_OUT=$(echo "$OUT" | sed '$d')
             ORACLE_OUT=$(echo "$SABOTAGED_OUT" | $CHECKER $ARG 2>/dev/null)
