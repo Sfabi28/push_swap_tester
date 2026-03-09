@@ -266,6 +266,15 @@ check_leaks() {
         TIMEOUT_DETECTED=1
     fi
 
+    ARG="1 2 3 4"
+    run_valgrind_with_timeout "$PUSH_SWAP" $ARG > /dev/null 2>> valgrind_log.txt
+    STATUS=$?
+    if [ $STATUS -eq 124 ]; then
+        echo -e "Valgrind run already sorted input: ${RED}[TIMEOUT]${NC}"
+        echo "VALGRIND TIMEOUT: $PUSH_SWAP $ARG" >> "$LOG_FILE"
+        TIMEOUT_DETECTED=1
+    fi
+
     if [ $TIMEOUT_DETECTED -eq 1 ]; then
         echo -e "${YELLOW}Some Valgrind runs timed out.${NC}"
     fi
